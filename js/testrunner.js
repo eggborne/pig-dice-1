@@ -75,30 +75,24 @@ function runTests(testsObject=tests, options=defaultOptions) {
 }
 
 tests = {
-  vowelCounter: [
+  getDiceRoll: [
     {
-      description: "It recognizes a single vowel.",
-      code: () => vowelCounter('a'),
-      expected: 1
+      description: "It returns an integer",
+      code: () => {
+        let game = new Game();
+        game.getDiceRoll();
+        return typeof roll === 'number';
+      },
+      expected: true
     },
     {
-      description: "It recognizes a single vowel regardless of case.",
-      code: () => vowelCounter('A'),
-      expected: 1
+      description: "It returns integer between 1 and 6",
+      code: () => {
+        let game = new Game();
+        let roll = game.getDiceRoll();
+        return [1,2,3,4,5,6].indexOf(roll) !== -1;
+      },
+      expected: true
     },
-    
-  ],
-  numberOfOccurrencesInText: [
-    {
-      description: "It should return 0 occurrences of a word for an empty string.",
-      code: () => numberOfOccurrencesInText('red', ''),
-      expected: 0
-    },
-    {
-      description: "It should return 1 occurrence of a word when the word and the text are the same.",
-      code: () => numberOfOccurrencesInText('red', 'red'),
-      expected: 1
-    },
-    
   ],
 }
