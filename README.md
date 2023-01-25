@@ -1,37 +1,69 @@
-.1 get random number generator
-  is integer?
-  is between 1 and 6?
-
-.2 make sure odds are correct
-.3 diceRoll works
-.4 logic for adding score up
+.1 random number generator 1-6
+.2 create test for evenly distributed output
+# .3 create player object and test
+.4   create Game object and test
+.5 create scoreBoard object and test   
+.5 logic for adding score up
 .5 logic for loosing turn on 1 roll
-.6 outputting score to score and roll counter to array or variables 
+.6 outputting score to scoreboard and roll counter to array or variables 
 .7 repeat cycle and have if for reaching 100
 .8 end game with total score output ready
+.9 end game output
 
 
-turn sequence
+# Describe: template()
+# Test: ""
+# Code: const text = "hello"; wordCounter(text);
+# Expected Output: 1
 
-1. ((getDiceRoll for a 1-6))
-2. if rolled a 1 
-    end turn 
-2. else add score to total
-3. if score > 100
-      end game as winner
-    else
-4 .choose whether to roll again or hold
-  if roll
-    returm to 1
-  if hold
-    change turn
-  
+.1 Describe: roll()
+Test: "roll outputs number between 1-6"
+Code: roll();
+Expected Output: <1-6>
 
-  #
-  player rolls dice as many times as they want and keeps score
-    if 1 is rolled, you loose the turn and score goes to 0
-  next round
-    repeat until 100 is reached  
+.2 Describe: rollTest()
+Test: "output is evenly distributed for 100E^6 rolls"
+Code: rollTest()
+Expected Output: <16,66x,xxx *6>
+
+.3 Describe ()
+Test:
+Code:
+Expected Output:
+
+
+Describe: "Game Object"
+Test: "game object works"
+Code: 
+Expected Output: 
+
+
+Test: "dice method on Player works
+Code:
+Expected Output:
+
+Describe: scoreBoard Object
+Test: 
+Code:
+Expected Output:
+
+Test:
+Code:
+Expected Output:
+
+Test:
+Code:
+Expected Output:
+
+Test:
+Code:
+Expected Output:
+
+Test:
+Code:
+Expected Output:
+
+
 
 
 
