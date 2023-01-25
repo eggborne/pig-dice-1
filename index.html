@@ -8,7 +8,9 @@
   <title>Pig Dice 2023</title>
 </head>
 <body>
-  <header>Pig Dice 2023</header>
+  <header>
+    <h1>Pig Dice 2023</h1>
+  </header>
   <main>
     <div id="round-status">
       <div id="roll-display">
@@ -26,7 +28,26 @@
       </div>
     </div>
     <div id="game-area">
-      <div id="1" class="player-knob">
+      <button type="button" id="new-game-button" class="showing">Start New Game...</button>
+      <div id="new-game-form">
+        <h3>New Game</h3>
+        <div class="input-row">
+          <label for="winning-score-select">Winning Score:</label>
+          <select id="winning-score-select">
+            <option name="25">25</option>
+            <option name="50">50</option>
+            <option selected name="100">100</option>
+            <option name="500">500</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <p>Player</p>
+          <input id="player-name-input" type="text" placeholder="Enter name">
+        </div>
+        <button type="button" id="add-player-button">Add Another Player</button>
+        <button type="button" id="confirm-game-button">START!</button>
+      </div>
+      <!-- <div id="1" class="player-knob">
         <div class="player-name">Carlos</div>
         <div class="player-score">23</div>
         <div id="button-area">
@@ -34,7 +55,7 @@
           <button type="button">HOLD</button>
         </div>
         <div class="player-turn-score">+12</div>
-      </div>
+      </div> -->
     </div>
   </main>
 </body>

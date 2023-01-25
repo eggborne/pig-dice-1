@@ -1,3 +1,26 @@
+window.addEventListener('load', function() {
+  document.getElementById('new-game-button').addEventListener('click', function() {
+    document.getElementById('new-game-form').classList.add('showing');
+    document.getElementById('new-game-button').classList.remove('showing');
+
+  });
+  document.getElementById('add-player-button').addEventListener('click', function(e) {
+    let newRow = document.createElement('div');
+    newRow.classList.add('input-row');
+    newRow.innerHTML = `
+      <p>Player:</p>
+      <input type="text" placeholder="Enter name">
+    `;
+    document.getElementById('new-game-form').insertBefore(newRow, e.target)
+  });
+  document.getElementById('confirm-game-button').addEventListener('click', function(e) {
+    document.getElementById('new-game-form').classList.remove('showing');
+    let newPlayerName = document.getElementById('player-name-input').value || 'Cheech';
+    let newPlayer = new Player(newPlayerName)
+    createPlayerArea(newPlayer);
+  });
+});
+
 // business logic
 let game;
 
@@ -65,9 +88,6 @@ Game.prototype.startTurn = function() {
         this.currentPlayerTurnID = this.nextTurnID(); 
         this.startTurn();
       }
-
-
-      
       // end game if player.total over 100
     }
   }
@@ -97,6 +117,25 @@ async function changeCenterDie(denomination) {
   }
   
   document.getElementById('roll-display').classList.add('showing');
+}
+
+async function createPlayerArea(playerObj) {
+  let newPlayerID = playerObj.id;
+  let newPlayerName = playerObj.name;
+  let newPlayerElement = document.createElement('div');
+  newPlayerElement.classList.add('player-knob');
+  newPlayerElement.innerHTML = `
+    <div id="${newPlayerID}" class="player-name">${newPlayerName}</div>
+    <div class="player-score">0</div>
+    <div id="button-area">
+      <button type="button">DRAW</button>
+      <button type="button">HOLD</button>
+    </div>
+    <div class="player-turn-score"></div>
+  `;
+  document.getElementById('game-area').append(newPlayerElement);
+  await pause(200);
+  newPlayerElement.classList.add('showing');
 }
 
 const diePatterns = [
