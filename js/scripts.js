@@ -7,12 +7,9 @@ function startGame(playerName) {
   game.addPlayer(player);
   game.startTurn(player.id)
 }
+
 function Game() {
-  this.players = {
-    // playerID: Player,
-    // playerID: Player,
-    // etc.
-  };
+  this.players = {};
   this.currentUniqueID = 0;
   this.currentPlayerTurnID = 1;
   this.turnScore = 0;
@@ -33,6 +30,10 @@ Game.prototype.getDiceRoll = function(playerID) {
   return randomInt(1,6);
 }
 
+Game.prototype.nextTurnID = function(playerID) {
+  return 1;
+}
+
 Game.prototype.startTurn = function() {
   alert(`starting turn for player ID ${this.currentPlayerTurnID}`)
   let player = this.players[this.currentPlayerTurnID];
@@ -40,8 +41,7 @@ Game.prototype.startTurn = function() {
   if (roll === 1) {
     alert(':( player rolled a 1. Moving on to next turn');
     console.log('Player', this.currentPlayerTurnID, 'rolled a 1, so end the turn');
-    let nextPlayerID = 1;
-    this.currentPlayerTurnID = nextPlayerID;
+    this.currentPlayerTurnID = this.nextTurnID(); 
     this.startTurn();
     // end turn
   } else {
@@ -51,19 +51,24 @@ Game.prototype.startTurn = function() {
     console.log('now player chooses DRAW or HOLD');
     let playerChoice = prompt(`Player ${player.id} rolled a ${roll}. Turn score so far is ${game.turnScore}. Player total score is ${player.score} Draw (d) or hold (h)?`);
     if (playerChoice[0].toLowerCase() === 'd') {
-      this.startTurn(this.currentPlayerTurnID);
-      // new turn with same player
+      this.startTurn(this.currentPlayerTurnID); // new turn with same player
     } else { // hold
-      player.score += this.turnScore;
+      player.score += this.turnScore; // add game.turnScore to player total
       this.turnScore = 0;
-      alert('held. Moving to next player');
 
-      this.currentPlayerTurnID = 1; // the next one in game.players, or first if at end
-      this.startTurn();
+      if (player.score >= 100) {
+        // end game
+        alert(`player met or exceeded maximum score with ${player.score}`);
+      } else {
+        // new turn with next player
+        alert('held. Moving to next player');
+        this.currentPlayerTurnID = this.nextTurnID(); 
+        this.startTurn();
+      }
 
-      // add game.turnScore to player total
+
+      
       // end game if player.total over 100
-      // new turn with next player
     }
   }
 }
@@ -77,7 +82,32 @@ function Player(name) {
 
 /// UI logic
 
+async function changeCenterDie(denomination) {
+  document.getElementById('roll-display').classList.remove('showing');
+  await pause(400)
+  let pattern = diePatterns[denomination].visibleDots;
+  for (let i=1; i<=9; i++) {
+    let dotQuery = `#center-die > .die-dot:nth-child(${i})`;
+    if (pattern.indexOf(i) !== -1) {
+      console.log('filling dotQuery', dotQuery);
+      document.querySelector(dotQuery).classList.add('visible');
+    } else {
+      document.querySelector(dotQuery).classList.remove('visible');
+    }
+  }
+  
+  document.getElementById('roll-display').classList.add('showing');
+}
 
+const diePatterns = [
+  undefined,
+  { visibleDots: [5] }, // 1
+  { visibleDots: [1,9] }, // 2
+  { visibleDots: [1,5,9] }, // 3
+  { visibleDots: [1,3,7,9] }, // 4
+  { visibleDots: [1,3,5,7,9] }, // 5
+  { visibleDots: [1,3,4,6,7,9] }, // 6
+]
 
 
 // utility functions

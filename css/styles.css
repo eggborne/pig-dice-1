@@ -1,0 +1,148 @@
+:root {
+  --game-area-size: 80vmin;
+  --player-knob-size: 24vmin;
+  --die-size: calc(var(--game-area-size) * 0.2);
+  --die-dot-size: calc(var(--die-size) * 0.25)
+}
+
+* {
+  margin: 0;
+  box-sizing: border-box;  
+}
+
+body {
+  width: 100vw;
+  font-family: sans-serif;
+  background-color: rgb(32, 32, 32);
+  color: white;
+}
+
+header {
+  background-color: rgb(0, 0, 0);
+  color: #aaa;
+  height: 10vw;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
+main {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+#game-area {
+  background-color: rgb(35, 50, 35);
+  width: var(--game-area-size);
+  height: var(--game-area-size);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.player-knob {
+  border-radius: 50%;
+  background-color: rgb(61, 69, 88);
+  color: white;
+  width: var(--player-knob-size);
+  height: var(--player-knob-size);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1vmin;
+  padding-top: 3%;
+  translate: 0 calc((var(--game-area-size) / 2) - (var(--player-knob-size) / 2)); 
+}
+
+.player-knob {
+  outline: 1vmin solid rgb(1, 123, 1);
+}
+
+.player-knob > .player-name {
+  font-weight: bold;
+  font-size: 2.5vmin;
+}
+
+.player-knob > .player-score, .player-knob > .player-turn-score {
+  font-weight: bold;
+  font-size: 3vmin;
+}
+
+.player-knob > .player-turn-score {
+  color: green;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.player-knob > #button-area {
+  display: flex;
+  justify-content: space-between;
+  gap: 5%;
+  height: 20%;
+  width: 80%;
+}
+
+.player-knob > #button-area button {
+  border-radius: 1rem;
+  font-size: 2vmin;
+  width: 100%;
+}
+
+#round-status {
+  position: absolute;
+  width: var(--game-area-size);
+  height: var(--game-area-size);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2vmin;
+}
+
+#round-status {
+  font-size: 3vmin;
+}
+
+#roll-display {
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+
+#roll-display.showing {
+  opacity: 1;
+}
+
+.die {
+  width: var(--die-size);
+  height: var(--die-size);
+  background-color: #aaa;
+  border-radius: 2.5vmin;
+  display: grid;
+  text-align: center;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 7%;
+}
+
+.die-dot {
+  display: flex;
+  align-self: center;
+  justify-self: center;
+  background-color: black;
+  border-radius: 50%;
+  width: 75%;
+  height: 75%;
+  opacity: 0;
+}
+
+.die-dot.visible {
+  opacity: 1;
+}
