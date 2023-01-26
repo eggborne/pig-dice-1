@@ -4,8 +4,6 @@ window.addEventListener('load', function() {
   document.getElementById('confirm-game-button').addEventListener('click', handleStartGameButtonClick);
 });
 
-
-
 // Business logic ///////////////////////////////////////////
 
 let game;
@@ -38,12 +36,12 @@ function Game() {
       'Ebert',
     ],
     bgColors: [
-      'George',
-      'Martha',
-      'Cheech',
-      'Chong',
-      'Siskel',
-      'Ebert',
+      '#3d4558',
+      '#47764f',
+      '#941e1e',
+      '#571d58',
+      '#2c7b7d',
+      '#945b19',
     ],
   }
 }
@@ -124,6 +122,38 @@ Game.prototype.advanceTurn = function(newTurnID) {
   this.currentPlayerTurnID = newTurnID || this.nextTurnID();
   console.log(`to player ${this.players[this.currentPlayerTurnID].name}`);
   document.getElementById(`player-knob-${this.currentPlayerTurnID}`).classList.add('selected');
+  this.rotateGameBoard(this.players[this.currentPlayerTurnID].boardAngle * -1)
+}
+
+Game.prototype.createPlayerElements = async function() {
+
+  // *the Player objects were already created and added to this.players when user clicked "Add Another Player"*
+
+  // This function gives a .name and .bgColor to each Player according to the user-entered values in the New Game input fields
+  // and then calls Game.prototype.createPlayerKnob(Player) to add it to the DOM.
+  
+  let totalPlayers = Object.keys(this.players).length;
+  console.log('total players is', totalPlayers);
+  
+  for (const playerID in this.players) {
+    let playerObj = this.players[playerID];
+    
+    // get the color and input values from the corresponding New Game menu input:
+    let nameInputValue = document.getElementById(`player-name-input-${playerID}`).value;
+    let colorInputValue = document.getElementById(`player-color-input-${playerID}`).value;
+
+    // assign those values to the Player object if they exist, or assign the default values if they don't:
+    playerObj.name = nameInputValue || this.defaultCPUOptions.names[playerID-1];
+    playerObj.bgColor = colorInputValue || this.defaultCPUOptions.bgColors[playerID-1];
+    //
+    let knobAngle = (360 / totalPlayers) * (playerID - 1);
+    playerObj.boardAngle = knobAngle;
+    console.log(`set ${playerObj.name}'s boardAngle to ${playerObj.boardAngle}`);
+
+    // now that the Player has a name and bgColor established, it can be used to create a .player-knob element:
+    await this.createPlayerKnob(playerObj);
+    console.log(`${playerID} is ${colorInputValue}`)
+  }
 }
 
 Game.prototype.createPlayerKnob = async function(playerObj) {
@@ -137,7 +167,7 @@ Game.prototype.createPlayerKnob = async function(playerObj) {
   newPlayerElement.id = `player-knob-${playerObj.id}`;
 
   // apply the classes it needs to look and be placed properly:
-  newPlayerElement.classList.add('player-knob', `position-${playerObj.id}`);
+  newPlayerElement.classList.add('player-knob');
 
   // apply the background color the user just chose for it on the New Game menu form:
   newPlayerElement.style.backgroundColor = playerObj.bgColor;
@@ -145,7 +175,7 @@ Game.prototype.createPlayerKnob = async function(playerObj) {
   // fill in the HTML of the player knob, plugging in the player's ID and name:
   newPlayerElement.innerHTML = `
     <div id="${playerObj.id}" class="player-name">${playerObj.name}</div>
-    <div class="player-score">0</div>
+    <div class="player-score">${playerObj.score}</div>
     <div class="button-area">
       <button class="draw-button" type="button">DRAW</button>
       <button class="hold-button" type="button">HOLD</button>
@@ -170,32 +200,15 @@ Game.prototype.createPlayerKnob = async function(playerObj) {
   ////// ADD KNOB TO DOM
 
   document.getElementById('game-area').append(newPlayerElement);
+
+  let playerKnobSize = parseInt(getComputedStyle(newPlayerElement).width);
+  let gameBoardRadius = parseInt(getComputedStyle(document.getElementById('game-area')).width) / 2;
+  gameBoardRadius -= (playerKnobSize / 2);
+  let distancesFromCenter = getXandYDistanceForAngle(playerObj.boardAngle, gameBoardRadius);
+  newPlayerElement.style.translate = `${distancesFromCenter.x}px ${distancesFromCenter.y}px`;
+
   await pause(200);
   newPlayerElement.classList.add('showing');
-}
-
-Game.prototype.createPlayerElements = async function() {
-
-  // *the Player objects were already created and added to this.players when user clicked "Add Another Player"*
-
-  // This function gives a .name and .bgColor to each Player according to the user-entered values in the New Game input fields
-  // and then calls Game.prototype.createPlayerKnob(Player) to add it to the DOM.
-
-  for (const playerID in this.players) {
-    let playerObj = this.players[playerID];
-
-    // get the color and input values from the corresponding New Game menu input:
-    let nameInputValue = document.getElementById(`player-name-input-${playerID}`).value;
-    let colorInputValue = document.getElementById(`player-color-input-${playerID}`).value;
-
-    // assign those values to the Player object if they exist, or assign the default values if they don't:
-    playerObj.name = nameInputValue || this.defaultCPUOptions.bgColors[playerID-1];
-    playerObj.bgColor = colorInputValue || this.defaultCPUOptions.bgColors[playerID-1];
-    //
-
-    // now that the Player has a name and bgColor established, it can be used to create a .player-knob element:
-    await this.createPlayerKnob(playerObj);
-  }
 }
 
 Game.prototype.changeCenterDie = async function(denomination) {
@@ -221,12 +234,24 @@ Game.prototype.changeCenterDie = async function(denomination) {
   document.getElementById('roll-display').classList.add('showing');
 }
 
+Game.prototype.rotateGameBoard = function(degrees) {
+  let gameBoard = document.getElementById('game-area');
+  gameBoard.style.transform = `rotate(${degrees}deg)`;
+  let playerKnobs = [...document.getElementsByClassName('player-knob')];
+  for (let knob in playerKnobs) {
+    let currentKnob = playerKnobs[knob];
+    console.log('knob', currentKnob.style);
+    currentKnob.style.transform = `rotate(${degrees * -1}deg)`;
+  }
+}
+
 function Player() {
   this.id; // established by Game.prototype.addPlayer()
   this.name; // established by Game.prototype.createPlayerElements()
   this.bgColor; // established by Game.prototype.createPlayerElements()
   this.score = 0;
   this.rollCount = 0;
+  this.boardAngle = 0; // degrees of angle from center
 }
 
 
@@ -265,7 +290,7 @@ function handleAddPlayerClick(e) { // user clicks "Add Another Player" on the "N
   newRow.classList.add('input-row');
   newRow.innerHTML = `
     <p>Player ${newPlayer.id}:</p>
-    <input value="#3d4558" class="player-color-input" id="player-color-input-${newPlayer.id}" type="color">
+    <input value="${game.defaultCPUOptions.bgColors[newPlayer.id-1]}" class="player-color-input" id="player-color-input-${newPlayer.id}" type="color">
     <input id="player-name-input-${newPlayer.id}" type="text" placeholder="Enter name">
   `;
 
@@ -294,3 +319,21 @@ async function handleStartGameButtonClick(e) { // user clicks "START!" on the "N
 
 const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 const pause = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+function getXandYDistanceForAngle(angle, radius) {
+  angle = degreesToRadians(angle + 90);
+  //let xDistance = Math.cos(angle) * radius;
+  let xDistance = Math.cos(angle) * radius;
+  console.log(xDistance);
+  let yDistance = Math.sin(angle) * radius;
+  console.log(yDistance);
+  return { x: xDistance, y: yDistance };
+}
+
+function radiansToDegrees(radians) {
+  return radians * (180/Math.PI);
+}
+
+function degreesToRadians(degrees) {  
+  return degrees * (Math.PI/180);
+}
