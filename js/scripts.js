@@ -2,6 +2,7 @@ window.addEventListener('load', function() {
   document.getElementById('new-game-button').addEventListener('click', handleNewGameButtonClick);
   document.getElementById('add-player-button').addEventListener('click', handleAddPlayerClick);
   document.getElementById('confirm-game-button').addEventListener('click', handleStartGameButtonClick);
+  document.getElementById('play-again-button').addEventListener('click', handlePlayAgainButtonClick);
 });
 
 // Business logic ///////////////////////////////////////////
@@ -15,6 +16,8 @@ function Game() {
   this.pointsThisTurn = 0; // reset to 0 at end of each turn ('hold' clicked or player rolls 1)
   this.phase = 'title'; // might be useful...?
   this.boardRotation = 0;
+  this.knobScale = 1;
+  this.winningScore = 100;
 
   // referred to by Game.prototype.changeCenterDie to blacken the correct dots for each number
   this.diePatterns = [
@@ -35,6 +38,8 @@ function Game() {
       'Chong',
       'Siskel',
       'Ebert',
+      'Romy',
+      'Michelle',
     ],
     bgColors: [
       '#3d4558',
@@ -43,6 +48,8 @@ function Game() {
       '#571d58',
       '#2c7b7d',
       '#945b19',
+      '#a8b73c',
+      '#243d2f',
     ],
   }
 }
@@ -70,7 +77,6 @@ Game.prototype.nextTurnID = function(playerID) {
   return this.currentPlayerTurnID;
 }
 
-
 Game.prototype.dealDie = async function() {
   let player = this.players[this.currentPlayerTurnID];
   let knobElement = document.querySelector(`#player-knob-${player.id}`);
@@ -83,6 +89,10 @@ Game.prototype.dealDie = async function() {
   if (roll === 1) {
     console.warn(':( player rolled a 1. Moving on to next turn');
     document.getElementById('center-die').classList.add('flashing');
+    setTimeout(() => {
+      document.getElementById('center-die').classList.remove('flashing');
+      this.changeCenterDie();
+    }, 600)
     turnOver = true;
   } else {
     console.log('Player rolled a', roll);
@@ -106,7 +116,7 @@ Game.prototype.advanceTurn = async function(newTurnID) {
   if (!newTurnID && Object.keys(this.players).length > 1) {
     this.boardRotation += rotationInterval;
     this.rotateGameBoard(this.boardRotation * -1);
-    await pause(600);
+    await pause(1000);
   }
   document.getElementById(`player-knob-${this.currentPlayerTurnID}`).classList.add('selected');
   document.querySelector(`#player-knob-${this.currentPlayerTurnID} > .button-area`).classList.add('available');
@@ -122,6 +132,12 @@ Game.prototype.createPlayerElements = async function() {
   
   let totalPlayers = Object.keys(this.players).length;
   console.log('total players is', totalPlayers);
+  if (totalPlayers > 6) {
+    this.knobScale = 1 - ((totalPlayers - 6) / 12);
+  } else {
+    this.knobScale = 1;
+  }
+  console.log('knobScale is', this.knobScale)
   
   for (const playerID in this.players) {
     let playerObj = this.players[playerID];
@@ -141,8 +157,10 @@ Game.prototype.createPlayerElements = async function() {
     //
 
     // now that the Player has a name, boardAngle, and bgColor established, it can be used to create a .player-knob element:
-    await this.createPlayerKnob(playerObj);
-    console.log(`${playerID} is ${colorInputValue}`)
+    let newKnob = await this.createPlayerKnob(playerObj);
+    if (totalPlayers > 6) {
+      newKnob.style.scale = this.knobScale;
+    }
   }
 }
 
@@ -190,9 +208,14 @@ Game.prototype.createPlayerKnob = async function(playerObj) {
     if (game.phase === 'waiting for player') {
       playerObj.score += game.pointsThisTurn;
       document.querySelector(`#player-knob-${game.currentPlayerTurnID} > .player-score`).innerText = playerObj.score;
+      if (playerObj.score >= game.winningScore) {
+        game.callWinModal(playerObj);
+        return;
+      }
+      
+      await game.changeCenterDie();
       await game.advanceTurn();
     }
-
   });
 
   ////// ADD KNOB TO DOM
@@ -207,6 +230,7 @@ Game.prototype.createPlayerKnob = async function(playerObj) {
 
   await pause(200);
   newPlayerElement.classList.add('showing');
+  return newPlayerElement;
 }
 
 Game.prototype.changeCenterDie = async function(denomination) {
@@ -214,9 +238,11 @@ Game.prototype.changeCenterDie = async function(denomination) {
   // fade out if showing already:
   if (document.getElementById('roll-display').classList.contains('showing')) {
     document.getElementById('roll-display').classList.remove('showing');
-    await pause(800); // wait for it to fully disappear before changing the dots
+    if (!denomination) {
+      return;
+    }
+    await pause(400); // wait for it to fully disappear before changing the dots
   }
-  document.getElementById('center-die').classList.remove('flashing');
 
   // make dots visible or invisible according to this.diePatterns.visibleDots:
   let pattern = this.diePatterns[denomination-1].visibleDots;
@@ -244,6 +270,24 @@ Game.prototype.rotateGameBoard = function(degrees) {
   }
 }
 
+Game.prototype.callWinModal = function(winningPlayerObj) {
+  let winModal = document.getElementById('win-modal');
+  winModal.querySelector('div').innerText = `${winningPlayerObj.name} wins`;
+  winModal.classList.add('showing');
+}
+
+Game.prototype.resetBoard = function() {
+  for (let playerID in this.players) {
+    let currentPlayer = this.players[playerID];
+    currentPlayer.score = 0;
+    currentPlayer.rollCount = 0;
+    let playerElement = document.getElementById(`player-knob-${playerID}`);
+    playerElement.querySelector('.player-score').innerText = 0;
+    playerElement.querySelector('.player-turn-score').innerText = 0;
+  }
+  this.pointsThisTurn = 0;
+}
+
 function Player() {
   this.id; // established by Game.prototype.addPlayer()
   this.name; // established by Game.prototype.createPlayerElements()
@@ -263,17 +307,6 @@ function handleNewGameButtonClick() { // user clicks "New Game..." button at ini
   game = new Game();
   let player = new Player();
   game.addPlayer(player);
-
-  setInterval(() => {
-    let turnPlayer = game.players[game.currentPlayerTurnID];
-    document.getElementById('debug').innerHTML = `
-    <div><p>phase: </p><p>${game.phase}</p></div>
-    <div><p>pointsThisTurn: </p><p>${game.pointsThisTurn}</p></div>
-    <br />
-    <div><p>turn: </p><p>${turnPlayer.name || 'none'}</p></div>
-    <div><p>player score: </p><p>${turnPlayer.score}</p></div>
-    `;
-  }, 100);
 }
 
 function handleAddPlayerClick(e) { // user clicks "Add Another Player" on the "New Game" menu
@@ -300,16 +333,16 @@ function handleAddPlayerClick(e) { // user clicks "Add Another Player" on the "N
 async function handleStartGameButtonClick(e) { // user clicks "START!" on the "New Game" menu
   document.getElementById('new-game-form').classList.remove('showing');
   await game.createPlayerElements();
-  await pause(500);
+  await pause(300);
   document.getElementById(`player-knob-1`).classList.add('selected');
   await pause(500);
   game.phase = 'waiting for player';
-
-  // let firstRoll = game.getDiceRoll();
-  // game.changeCenterDie(firstRoll);
-  // game.pointsThisTurn += firstRoll;
-  // document.querySelector(`#player-knob-1 > .player-turn-score`).innerText = '+' + game.pointsThisTurn;
   game.advanceTurn(1);
+}
+
+async function handlePlayAgainButtonClick(e) {
+  game.resetBoard();
+  e.target.parentElement.classList.remove('showing');
 }
 
 // Utility functions
