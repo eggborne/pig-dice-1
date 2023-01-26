@@ -1,34 +1,21 @@
 window.addEventListener('load', function() {
-  document.getElementById('new-game-button').addEventListener('click', function() {
-    document.getElementById('new-game-form').classList.add('showing');
-    document.getElementById('new-game-button').classList.remove('showing');
-
-  });
-  document.getElementById('add-player-button').addEventListener('click', function(e) {
-    let newRow = document.createElement('div');
-    newRow.classList.add('input-row');
-    newRow.innerHTML = `
-      <p>Player:</p>
-      <input type="text" placeholder="Enter name">
-    `;
-    document.getElementById('new-game-form').insertBefore(newRow, e.target)
-  });
-  document.getElementById('confirm-game-button').addEventListener('click', function(e) {
-    document.getElementById('new-game-form').classList.remove('showing');
-    let newPlayerName = document.getElementById('player-name-input').value || 'Cheech';
-    let newPlayer = new Player(newPlayerName)
-    createPlayerArea(newPlayer);
-  });
+  document.getElementById('new-game-button').addEventListener('click', initiateNewGame);
+  document.getElementById('add-player-button').addEventListener('click', handleAddPlayerClick);
+  document.getElementById('confirm-game-button').addEventListener('click', handleConfirmGameClick);
 });
 
+
+
 // business logic
+
 let game;
 
-function startGame(playerName) {
+function initiateNewGame(playerName) {
+  document.getElementById('new-game-form').classList.add('showing');
+  document.getElementById('new-game-button').classList.remove('showing');
   game = new Game();
   let player = new Player(playerName);
   game.addPlayer(player);
-  game.startTurn(player.id)
 }
 
 function Game() {
@@ -36,6 +23,7 @@ function Game() {
   this.currentUniqueID = 0;
   this.currentPlayerTurnID = 1;
   this.turnScore = 0;
+  this.phase = 'idle';
 }
 
 Game.prototype.addPlayer = function(player) {
@@ -62,29 +50,30 @@ Game.prototype.startTurn = function() {
   let player = this.players[this.currentPlayerTurnID];
   let roll = this.getDiceRoll();
   if (roll === 1) {
-    alert(':( player rolled a 1. Moving on to next turn');
+    // alert(':( player rolled a 1. Moving on to next turn');
     console.log('Player', this.currentPlayerTurnID, 'rolled a 1, so end the turn');
     this.currentPlayerTurnID = this.nextTurnID(); 
     this.startTurn();
     // end turn
   } else {
     console.log('Player', this.currentPlayerTurnID, 'rolled a', roll);
-    game.turnScore += roll
+    this.turnScore += roll
     // player chooses draw or hold
     console.log('now player chooses DRAW or HOLD');
-    let playerChoice = prompt(`Player ${player.id} rolled a ${roll}. Turn score so far is ${game.turnScore}. Player total score is ${player.score} Draw (d) or hold (h)?`);
+    let playerChoice = prompt(`Player ${player.id} rolled a ${roll}. Turn score so far is ${this.turnScore}. Player total score is ${player.score} Draw (d) or hold (h)?`);
+    
     if (playerChoice[0].toLowerCase() === 'd') {
       this.startTurn(this.currentPlayerTurnID); // new turn with same player
     } else { // hold
-      player.score += this.turnScore; // add game.turnScore to player total
+      player.score += this.turnScore; // add this.turnScore to player total
       this.turnScore = 0;
 
       if (player.score >= 100) {
         // end game
-        alert(`player met or exceeded maximum score with ${player.score}`);
+        // alert(`player met or exceeded maximum score with ${player.score}`);
       } else {
         // new turn with next player
-        alert('held. Moving to next player');
+        // alert('held. Moving to next player');
         this.currentPlayerTurnID = this.nextTurnID(); 
         this.startTurn();
       }
@@ -101,6 +90,34 @@ function Player(name) {
 }
 
 /// UI logic
+
+function handleAddPlayerClick(e) {
+  let newPlayer = new Player();
+  game.addPlayer(newPlayer);
+  let newRow = document.createElement('div');
+  newRow.classList.add('input-row');
+  newRow.innerHTML = `
+    <p>Player ${newPlayer.id}:</p>
+    <input value="#3d4558" class="player-color-input" id="player-color-input-${newPlayer.id}" type="color">
+    <input id="player-name-input-${newPlayer.id}" type="text" placeholder="Enter name">
+  `;
+  document.getElementById('new-game-form').insertBefore(newRow, e.target);
+}
+
+async function handleConfirmGameClick(e) {
+  document.getElementById('new-game-form').classList.remove('showing');
+  createPlayerElements();
+  await pause(1000);
+  game.currentPlayerTurnID = 1;
+  document.getElementById(`player-knob-1`).classList.add('selected');
+  await pause(500);
+  let firstRoll = game.getDiceRoll();
+  changeCenterDie(firstRoll);
+  game.turnScore += firstRoll;
+  game.phase = 'waiting';
+  document.querySelector(`#player-knob-1 > .player-turn-score`).innerText = '+' + game.turnScore;
+  // game.startTurn();
+}
 
 async function changeCenterDie(denomination) {
   document.getElementById('roll-display').classList.remove('showing');
@@ -124,18 +141,43 @@ async function createPlayerArea(playerObj) {
   let newPlayerName = playerObj.name;
   let newPlayerElement = document.createElement('div');
   newPlayerElement.classList.add('player-knob');
+  newPlayerElement.classList.add(`position-${newPlayerID}`);
+  newPlayerElement.style.backgroundColor = playerObj.bgColor;
+  newPlayerElement.id = `player-knob-${newPlayerID}`
+  let drawButton = document.createElement('button');
+  let holdButton = document.createElement('button');
+  drawButton.classList.add('draw-button');
+  holdButton.classList.add('hold-button');
   newPlayerElement.innerHTML = `
-    <div id="${newPlayerID}" class="player-name">${newPlayerName}</div>
-    <div class="player-score">0</div>
-    <div id="button-area">
-      <button type="button">DRAW</button>
-      <button type="button">HOLD</button>
-    </div>
-    <div class="player-turn-score"></div>
+  <div id="${newPlayerID}" class="player-name">${newPlayerName}</div>
+  <div class="player-score">0</div>
+  <div id="button-area-${newPlayerID}">
+    <button class="" type="button">DRAW</button>
+    <button class="player-knob-hold-button" type="button">HOLD</button>
+  </div>
+  <div class="player-turn-score"></div>
   `;
+  // document.getElementById(`button-area-${newPlayerID} > .draw-button`).addEventListener('click', function() {
+  //   console.log('clicked', e.target)
+  // });
+  // document.getElementById(`button-area-${newPlayerID} > .hold-button`).addEventListener('click', function() {
+  //   console.log('clicked', e.target)
+  // });
   document.getElementById('game-area').append(newPlayerElement);
+
   await pause(200);
   newPlayerElement.classList.add('showing');
+}
+
+async function createPlayerElements() {
+  for (let playerID in game.players) {
+    let playerObj = game.players[playerID];
+    let defaultName = defaultNames[playerID-1];
+    let newPlayerName = document.getElementById(`player-name-input-${playerID}`).value || defaultName;
+    playerObj.name = newPlayerName;
+    playerObj.bgColor = document.getElementById(`player-color-input-${playerID}`).value;
+    createPlayerArea(playerObj);
+  }
 }
 
 const diePatterns = [
@@ -146,6 +188,13 @@ const diePatterns = [
   { visibleDots: [1,3,7,9] }, // 4
   { visibleDots: [1,3,5,7,9] }, // 5
   { visibleDots: [1,3,4,6,7,9] }, // 6
+]
+
+const defaultNames = [
+  'Cheech',
+  'Chong',
+  'George',
+  'Martha'
 ]
 
 

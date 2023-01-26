@@ -77,11 +77,21 @@ button, input, select {
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: transform 600ms ease;
+  /* transform: rotate(90deg); */
+}
+
+#game-area.rotate90 {
+}
+
+#game-area.rotate90 .player-knob {
+  transform: rotate(-90deg);
 }
 
 .player-knob {
+  position: absolute;
   border-radius: 50%;
-  background-color: rgb(61, 69, 88);
+  background-color: #3d4558;
   color: white;
   width: var(--player-knob-size);
   height: var(--player-knob-size);
@@ -91,10 +101,25 @@ button, input, select {
   align-items: center;
   gap: 1vmin;
   padding-top: 2%;
-  translate: 0 calc((var(--game-area-size) / 2) - (var(--player-knob-size) / 2)); 
   opacity: 0;
   scale: 1.1;
-  transition: opacity 300ms ease, scale 300ms ease;
+  transition: opacity 300ms ease, scale 300ms ease, outline 400ms ease;
+}
+
+.player-knob.position-1 {
+  translate: 0 calc((var(--game-area-size) / 2) - (var(--player-knob-size) / 2)); 
+}
+
+.player-knob.position-2 {
+  translate: 0 calc((var(--game-area-size) / -2) - (var(--player-knob-size) / -2)); 
+}
+
+.player-knob.position-3 {
+  translate: calc((var(--game-area-size) / -2) - (var(--player-knob-size) / -2)) 0; 
+}
+
+.player-knob.position-4 {
+  translate: calc((var(--game-area-size) / 2) - (var(--player-knob-size) / 2)) 0; 
 }
 
 .player-knob.showing {
@@ -102,8 +127,9 @@ button, input, select {
   scale: 1;
 }
 
-.player-knob {
+.player-knob.selected {
   outline: 1vmin solid rgb(1, 123, 1);
+  animation: pulse 600ms ease alternate infinite;
 }
 
 .player-knob > .player-name {
@@ -205,6 +231,11 @@ button, input, select {
   pointer-events: none;
 }
 
+#new-game-form .player-color-input {
+  width: 30%;
+  height: 3.5rem;
+}
+
 #new-game-form input {
   font-size: 2rem;
   text-align: right;
@@ -241,5 +272,22 @@ button, input, select {
 }
 
 .input-row input {
-  width: 70%;
+  width: 50%;
+}
+
+#debug {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background: white;
+  color: black;
+}
+
+@keyframes pulse {
+  from {
+    outline-width: 0.5rem;
+  }
+  to {
+    outline-width: 1.5rem;
+  }
 }
