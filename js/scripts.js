@@ -8,21 +8,28 @@ function roll() {
 }
 //#endregion
 //Game Object constructor
-function Game(name) {
-  this.gameName = name;
+function Game() {
   this.Player = {}
-}
+  this.currentId = 0;
+};
+
+//Game method for assigning unique id to player
+Game.prototype.aId = function() {
+  this.currentId += 1;
+  return this.currentId;
+};
 //Player Object constructor
 function Player(pName) {
   this.pName = pName;
   this.pScore = 0;
   this.pTotalScore = 0;
-}
+};
 
 //add player
 Game.prototype.addPlayer = function(name) {
-  this.Player.pName = "you";
-}
+  this.Player.currentId = this.aId();
+  this.Player.pName = name;
+};
 
 //temp console
 const fGame = new Game("FirstGame");
