@@ -14,6 +14,7 @@ function Game() {
   this.currentPlayerTurnID = 1; // cycled by Game.prototype.nextTurnID()
   this.pointsThisTurn = 0; // reset to 0 at end of each turn ('hold' clicked or player rolls 1)
   this.phase = 'title'; // might be useful...?
+  this.boardRotation = 0;
 
   // referred to by Game.prototype.changeCenterDie to blacken the correct dots for each number
   this.diePatterns = [
@@ -69,60 +70,47 @@ Game.prototype.nextTurnID = function(playerID) {
   return this.currentPlayerTurnID;
 }
 
-Game.prototype.startTurn = function() {
+
+Game.prototype.dealDie = async function() {
   let player = this.players[this.currentPlayerTurnID];
+  let knobElement = document.querySelector(`#player-knob-${player.id}`);
   let turnOver = false;
-  alert(`rolling for ${player.name}...`)
+  console.log(`rolling for ${player.name}...`);
+
   let roll = this.getDiceRoll();
+  await this.changeCenterDie(roll);
+  
   if (roll === 1) {
-    alert(':( player rolled a 1. Moving on to next turn');
-    console.log('Player', this.currentPlayerTurnID, 'rolled a 1, so end the turn');
+    console.warn(':( player rolled a 1. Moving on to next turn');
+    document.getElementById('center-die').classList.add('flashing');
     turnOver = true;
   } else {
-    console.log('Player', this.currentPlayerTurnID, 'rolled a', roll);
+    console.log('Player rolled a', roll);
     this.pointsThisTurn += roll;
-    document.querySelector(`#player-knob-${player.id} > .player-turn-score`).innerText = '+' + game.pointsThisTurn;
-
-    // player chooses draw or hold
-    console.log('now player chooses DRAW or HOLD');
-    let playerChoice = prompt(`${player.name} rolled a ${roll}. Turn score so far is ${this.pointsThisTurn}. 
-    \nPlayer total score is ${player.score} Draw (d) or hold (h)?`);
-    
-    if (playerChoice[0].toLowerCase() === 'd') {
-      this.startTurn(this.currentPlayerTurnID); // new turn with same player
-    } else { // hold
-      player.score += this.pointsThisTurn; // add this.pointsThisTurn to player total
-      document.querySelector(`#player-knob-${player.id} > .player-score`).innerText = '+' + game.pointsThisTurn;
-      this.pointsThisTurn = 0;
-
-      if (player.score >= 100) {
-        // end game
-        alert(`player met or exceeded maximum score with ${player.score}`);
-      } else {
-        // new turn with next player
-        alert('held. Moving to next player');
-        turnOver = true;
-        // this.currentPlayerTurnID = this.nextTurnID(); 
-        // this.startTurn();
-      }
-    }
+    knobElement.querySelector(`.player-turn-score`).innerText = '+' + game.pointsThisTurn;    
   }
   if (turnOver) {
-    document.getElementById(`player-knob-${player.id}`).classList.remove('selected');
-    this.currentPlayerTurnID = this.nextTurnID();
-    document.getElementById(`player-knob-${this.currentPlayerTurnID}`).classList.add('selected');
-    // alert(`${player.name} turn is over. Now is ${this.players[this.currentPlayerTurnID]}'s turn`);
-    this.startTurn();
+    await pause(600);
+    await this.advanceTurn();
+    
   }
 }
 
-Game.prototype.advanceTurn = function(newTurnID) {
-  console.log(`switching from player ${this.players[this.currentPlayerTurnID].name}`);
+Game.prototype.advanceTurn = async function(newTurnID) {
+  this.pointsThisTurn = 0;
+  let rotationInterval = 360 / Object.keys(this.players).length;
+  document.getElementById(`player-knob-${this.currentPlayerTurnID}`).querySelector(`.player-turn-score`).innerText = '';    
   document.getElementById(`player-knob-${this.currentPlayerTurnID}`).classList.remove('selected');
+  document.querySelector(`#player-knob-${this.currentPlayerTurnID} > .button-area`).classList.remove('available');
   this.currentPlayerTurnID = newTurnID || this.nextTurnID();
-  console.log(`to player ${this.players[this.currentPlayerTurnID].name}`);
+  if (!newTurnID && Object.keys(this.players).length > 1) {
+    this.boardRotation += rotationInterval;
+    this.rotateGameBoard(this.boardRotation * -1);
+    await pause(600);
+  }
   document.getElementById(`player-knob-${this.currentPlayerTurnID}`).classList.add('selected');
-  this.rotateGameBoard(this.players[this.currentPlayerTurnID].boardAngle * -1)
+  document.querySelector(`#player-knob-${this.currentPlayerTurnID} > .button-area`).classList.add('available');
+  this.dealDie();
 }
 
 Game.prototype.createPlayerElements = async function() {
@@ -146,11 +134,13 @@ Game.prototype.createPlayerElements = async function() {
     playerObj.name = nameInputValue || this.defaultCPUOptions.names[playerID-1];
     playerObj.bgColor = colorInputValue || this.defaultCPUOptions.bgColors[playerID-1];
     //
+
+    // set the angle away from center according to the number of players
     let knobAngle = (360 / totalPlayers) * (playerID - 1);
     playerObj.boardAngle = knobAngle;
-    console.log(`set ${playerObj.name}'s boardAngle to ${playerObj.boardAngle}`);
+    //
 
-    // now that the Player has a name and bgColor established, it can be used to create a .player-knob element:
+    // now that the Player has a name, boardAngle, and bgColor established, it can be used to create a .player-knob element:
     await this.createPlayerKnob(playerObj);
     console.log(`${playerID} is ${colorInputValue}`)
   }
@@ -187,13 +177,21 @@ Game.prototype.createPlayerKnob = async function(playerObj) {
 
   // call querySelector on newPlayerElement (not document) so that the query will only search within newPlayerElement:
   newPlayerElement.querySelector('button.draw-button').addEventListener('click', function(e) {
-    console.log(`${playerObj.name} clicked DRAW`);
+    console.log(`${playerObj.name} clicked DRAW while phase is ${game.phase}`);
     // do 'DRAW' stuff
-
+    if (game.phase === 'waiting for player') {
+      console.log('phase is waiting')
+      game.dealDie();
+    }
   });
-  newPlayerElement.querySelector('button.hold-button').addEventListener('click', function(e) {
-    console.log(`${playerObj.name} clicked HOLD`);
+  newPlayerElement.querySelector('button.hold-button').addEventListener('click', async function(e) {
+    console.log(`${playerObj.name} clicked HOLD while phase is ${game.phase}`);
     // do 'HOLD' stuff
+    if (game.phase === 'waiting for player') {
+      playerObj.score += game.pointsThisTurn;
+      document.querySelector(`#player-knob-${game.currentPlayerTurnID} > .player-score`).innerText = playerObj.score;
+      await game.advanceTurn();
+    }
 
   });
 
@@ -214,10 +212,11 @@ Game.prototype.createPlayerKnob = async function(playerObj) {
 Game.prototype.changeCenterDie = async function(denomination) {
 
   // fade out if showing already:
-  if (document.getElementById('center-die').classList.contains('showing')) {
+  if (document.getElementById('roll-display').classList.contains('showing')) {
     document.getElementById('roll-display').classList.remove('showing');
-    await pause(400); // wait for it to fully disappear before changing the dots
+    await pause(800); // wait for it to fully disappear before changing the dots
   }
+  document.getElementById('center-die').classList.remove('flashing');
 
   // make dots visible or invisible according to this.diePatterns.visibleDots:
   let pattern = this.diePatterns[denomination-1].visibleDots;
@@ -235,13 +234,13 @@ Game.prototype.changeCenterDie = async function(denomination) {
 }
 
 Game.prototype.rotateGameBoard = function(degrees) {
+  console.log('rotating game board by degrees:', degrees)
   let gameBoard = document.getElementById('game-area');
-  gameBoard.style.transform = `rotate(${degrees}deg)`;
+  gameBoard.style.rotate = `${degrees}deg`;
   let playerKnobs = [...document.getElementsByClassName('player-knob')];
   for (let knob in playerKnobs) {
     let currentKnob = playerKnobs[knob];
-    console.log('knob', currentKnob.style);
-    currentKnob.style.transform = `rotate(${degrees * -1}deg)`;
+    currentKnob.style.rotate = `${degrees * -1}deg`;
   }
 }
 
@@ -304,15 +303,13 @@ async function handleStartGameButtonClick(e) { // user clicks "START!" on the "N
   await pause(500);
   document.getElementById(`player-knob-1`).classList.add('selected');
   await pause(500);
+  game.phase = 'waiting for player';
 
-
-  let firstRoll = game.getDiceRoll();
-  game.changeCenterDie(firstRoll);
-  game.pointsThisTurn += firstRoll;
-  game.phase = 'waiting';
-  document.querySelector(`#player-knob-1 > .player-turn-score`).innerText = '+' + game.pointsThisTurn;
-  
-  // game.startTurn();
+  // let firstRoll = game.getDiceRoll();
+  // game.changeCenterDie(firstRoll);
+  // game.pointsThisTurn += firstRoll;
+  // document.querySelector(`#player-knob-1 > .player-turn-score`).innerText = '+' + game.pointsThisTurn;
+  game.advanceTurn(1);
 }
 
 // Utility functions

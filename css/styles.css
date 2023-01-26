@@ -72,14 +72,14 @@ button, input, select {
 
 #game-area {
   position: relative;
-  background-color: rgb(35, 50, 35);
+  /* background-color: rgb(35, 50, 35); */
   width: var(--game-board-size);
   height: var(--game-board-size);
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: transform 800ms ease;
+  transition: transform 800ms ease, rotate 800ms ease;
 }
 
 #game-area {
@@ -105,7 +105,7 @@ button, input, select {
   padding-top: 2%;
   opacity: 0;
   scale: 1.1;
-  transition: opacity 300ms ease, transform 800ms ease, outline 400ms ease;
+  transition: opacity 300ms ease, transform 800ms ease, rotate 800ms ease, outline 400ms ease;
 }
 
 .player-knob.position-1 {
@@ -143,6 +143,7 @@ button, input, select {
 .player-knob > .player-score, .player-knob > .player-turn-score {
   font-weight: bold;
   font-size: 3vmin;
+  text-shadow: 0 0 0.2rem black;
 }
 
 .player-knob > .player-turn-score {
@@ -158,6 +159,19 @@ button, input, select {
   gap: 5%;
   height: 20%;
   width: 80%;
+  pointer-events: none;
+  opacity: 0.5;
+  color: #aaa;
+}
+
+.button-area.available > button {
+  background-color: rgb(187, 255, 187);
+}
+
+.button-area.available {
+  pointer-events: all;
+  opacity: 1;
+  color: #000;
 }
 
 .player-knob > .button-area button {
@@ -181,15 +195,28 @@ button, input, select {
   font-size: 3vmin;
 }
 
+#center-die {
+  transform: none;
+  transition: transform 400ms ease;
+}
+
 #roll-display {
   opacity: 0;
-  transition: opacity 400ms ease;
+  transition: opacity 200ms ease;
   z-index: 1;
   pointer-events: none;
 }
 
 #roll-display.showing {
   opacity: 1;
+}
+
+#roll-display > #center-die {
+  transform: scale(0.25) rotate(180deg);
+}
+
+#roll-display.showing > #center-die {
+  transform: none;
 }
 
 .die {
@@ -202,6 +229,10 @@ button, input, select {
   grid-template-rows: 1fr 1fr 1fr;
   grid-template-columns: 1fr 1fr 1fr;
   padding: 7%;
+}
+
+.die.flashing {
+  animation: flash 60ms ease alternate infinite;
 }
 
 .die-dot {
@@ -312,5 +343,14 @@ button, input, select {
   }
   to {
     outline-width: 1.5rem;
+  }
+}
+
+@keyframes flash {
+  from {
+    background: #aaa;
+  }
+  to {
+    background: red;
   }
 }
