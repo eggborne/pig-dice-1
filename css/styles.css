@@ -1,8 +1,10 @@
 :root {
-  --game-area-size: 80vmin;
+  --header-height: 4rem;
+  --game-board-size: 80vmin;
   --player-knob-size: 24vmin;
-  --die-size: calc(var(--game-area-size) * 0.2);
-  --die-dot-size: calc(var(--die-size) * 0.25)
+  --die-size: calc(var(--game-board-size) * 0.2);
+  --die-dot-size: calc(var(--die-size) * 0.25);
+  --game-board-rotation: 90;
 }
 
 *, * *, * * * {
@@ -24,7 +26,7 @@ h1 {
 header {
   background-color: rgb(0, 0, 0);
   color: #aaa;
-  height: 10vmin;
+  height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -36,7 +38,7 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem 0;
+  padding-top: var(--header-height);
 }
 
 button, input, select {
@@ -71,21 +73,21 @@ button, input, select {
 #game-area {
   position: relative;
   background-color: rgb(35, 50, 35);
-  width: var(--game-area-size);
-  height: var(--game-area-size);
+  width: var(--game-board-size);
+  height: var(--game-board-size);
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: transform 600ms ease;
+  transition: transform 800ms ease;
+}
+
+#game-area {
+  transform: rotate(calc(var(--game-board-rotation) * -1)deg);
+}
+
+.player-knob {
   /* transform: rotate(90deg); */
-}
-
-#game-area.rotate90 {
-}
-
-#game-area.rotate90 .player-knob {
-  transform: rotate(-90deg);
 }
 
 .player-knob {
@@ -103,23 +105,23 @@ button, input, select {
   padding-top: 2%;
   opacity: 0;
   scale: 1.1;
-  transition: opacity 300ms ease, scale 300ms ease, outline 400ms ease;
+  transition: opacity 300ms ease, transform 800ms ease, outline 400ms ease;
 }
 
 .player-knob.position-1 {
-  translate: 0 calc((var(--game-area-size) / 2) - (var(--player-knob-size) / 2)); 
+  translate: 0 calc((var(--game-board-size) / 2) - (var(--player-knob-size) / 2)); 
 }
 
 .player-knob.position-2 {
-  translate: 0 calc((var(--game-area-size) / -2) - (var(--player-knob-size) / -2)); 
+  translate: calc((var(--game-board-size) / -2) - (var(--player-knob-size) / -2)) 0; 
 }
 
 .player-knob.position-3 {
-  translate: calc((var(--game-area-size) / -2) - (var(--player-knob-size) / -2)) 0; 
+  translate: 0 calc((var(--game-board-size) / -2) - (var(--player-knob-size) / -2)); 
 }
 
 .player-knob.position-4 {
-  translate: calc((var(--game-area-size) / 2) - (var(--player-knob-size) / 2)) 0; 
+  translate: calc((var(--game-board-size) / 2) - (var(--player-knob-size) / 2)) 0; 
 }
 
 .player-knob.showing {
@@ -135,6 +137,7 @@ button, input, select {
 .player-knob > .player-name {
   font-weight: bold;
   font-size: 2.5vmin;
+  font-size: calc(var(--die-size) * 0.2);
 }
 
 .player-knob > .player-score, .player-knob > .player-turn-score {
@@ -149,7 +152,7 @@ button, input, select {
   align-items: center;
 }
 
-.player-knob > #button-area {
+.player-knob > .button-area {
   display: flex;
   justify-content: space-between;
   gap: 5%;
@@ -157,16 +160,16 @@ button, input, select {
   width: 80%;
 }
 
-.player-knob > #button-area button {
-  border-radius: 1rem;
+.player-knob > .button-area button {
+  border-radius: 0.5rem;
   font-size: 2vmin;
-  width: 100%;
+  width: 50%;
 }
 
 #round-status {
   position: absolute;
-  width: var(--game-area-size);
-  height: var(--game-area-size);
+  width: var(--game-board-size);
+  height: var(--game-board-size);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -276,11 +279,31 @@ button, input, select {
 }
 
 #debug {
+  font-size: 1rem;
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  top: var(--header-height);
+  right: 0;
   background: white;
-  color: black;
+  color: rgba(0, 0, 0, 0.501);
+  padding: 1rem;
+  display: flex;
+  /* flex-direction: column; */
+  justify-content: space-between;
+  gap: 0.25rem;
+  min-width: 20vmin;
+  width: 100vw;
+  /* display: none; */
+}
+
+#debug > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+#debug > div > p:last-of-type {
+  color: #90e690;
 }
 
 @keyframes pulse {
