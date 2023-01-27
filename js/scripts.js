@@ -133,7 +133,8 @@ Game.prototype.createPlayerElements = async function() {
   let totalPlayers = Object.keys(this.players).length;
   console.log('total players is', totalPlayers);
   if (totalPlayers > 6) {
-    this.knobScale = 1 - ((totalPlayers - 6) / 12);
+    let knobAdjustment = ((totalPlayers - 6) / 20);
+    this.knobScale = 1 - knobAdjustment;
   } else {
     this.knobScale = 1;
   }
@@ -224,7 +225,7 @@ Game.prototype.createPlayerKnob = async function(playerObj) {
 
   let playerKnobSize = parseInt(getComputedStyle(newPlayerElement).width);
   let gameBoardRadius = parseInt(getComputedStyle(document.getElementById('game-area')).width) / 2;
-  gameBoardRadius -= (playerKnobSize / 2);
+  gameBoardRadius -= ((playerKnobSize * game.knobScale) / 2);
   let distancesFromCenter = getXandYDistanceForAngle(playerObj.boardAngle, gameBoardRadius);
   newPlayerElement.style.translate = `${distancesFromCenter.x}px ${distancesFromCenter.y}px`;
 
